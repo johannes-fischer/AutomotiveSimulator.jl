@@ -35,6 +35,21 @@ around the non-errorable IDM output.
     d_max::Float64 = 9.0 # maximum deceleration [m/s²] (positive)
 end
 
+function Base.copy(m::IntelligentDriverModel)
+    IntelligentDriverModel(
+        a=m.a,
+        σ=m.σ,
+        k_spd=m.k_spd,
+        δ=m.δ,
+        T=m.T,
+        v_des=m.v_des,
+        s_min=m.s_min,
+        a_max=m.a_max,
+        d_cmf=m.d_cmf,
+        d_max=m.d_max,
+    )
+end
+
 function set_desired_speed!(model::IntelligentDriverModel, v_des::Float64)
     model.v_des = v_des
     model
