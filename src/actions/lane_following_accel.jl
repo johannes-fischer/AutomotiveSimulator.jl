@@ -17,7 +17,7 @@ function propagate(veh::Entity{VehicleState,D,I}, action::LaneFollowingAccel, ro
     ds = vel(veh.state)
 
     ΔT² = ΔT*ΔT
-    Δs = ds*ΔT + 0.5*a_lon*ΔT²
+    Δs = max(ds*ΔT + 0.5*a_lon*ΔT², 0.)  # no negative path progression due to negative acceleration
 
     v₂ = max(ds + a_lon*ΔT, 0.)  # no negative velocities
 
