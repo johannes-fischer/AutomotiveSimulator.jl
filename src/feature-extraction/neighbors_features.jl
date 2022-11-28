@@ -14,15 +14,15 @@ struct NeighborLongitudinalResult
 end
 
 """
-    VehicleTargetPoint 
+    VehicleTargetPoint
 
-Defines a point on an entity that is used to measure distances. 
-The following target points are supported and are subtypes of VehicleTargetPoint: 
+Defines a point on an entity that is used to measure distances.
+The following target points are supported and are subtypes of VehicleTargetPoint:
 - `VehicleTargetPointFront`
 - `VehicleTargetPointCenter`
 - `VehicleTargetPointRear`
 
-The method `targetpoint_delta(::VehicleTargetPoint, ::Entity)` can be used to 
+The method `targetpoint_delta(::VehicleTargetPoint, ::Entity)` can be used to
 compute the delta in the longitudinal direction to add when considering a specific target point.
 """
 abstract type VehicleTargetPoint end
@@ -56,18 +56,18 @@ const VEHICLE_TARGET_POINT_CENTER = VehicleTargetPointCenter()
 """
     find_neighbor(scene::Scene, roadway::Roawday, ego::Entity; kwargs...)
 
-Search through lanes and road segments to find a neighbor of `ego` in the `scene`. 
+Search through lanes and road segments to find a neighbor of `ego` in the `scene`.
 Returns a `NeighborLongitudinalResult` object with the index of the neighbor in the scene and its relative distance.
 
 # Arguments
 
 - `scene::Scene` the scene containing all the entities
-- `roadway::Roadway` the road topology on which entities are driving 
+- `roadway::Roadway` the road topology on which entities are driving
 - `ego::Entity` the entity that we want to compute the neighbor of.
 
 # Keyword arguments
 - `lane::Union{Nothing, Lane}` the lane on which to search the neighbor, if different from the ego vehicle current lane, it uses the projection of the ego vehicle on the given lane as a reference point. If nothing, returns nothing.
-- `rear::Bool = false` set to true to search for rear neighbor, search forward neighbor by default 
+- `rear::Bool = false` set to true to search for rear neighbor, search forward neighbor by default
 - `max_distance::Float64 = 250.0` stop searching after this distance is reached, if the neighbor is further than max_distance, returns nothing
 - `targetpoint_ego::VehicleTargetPoint` the point on the ego vehicle used for distance calculation, see `VehicleTargetPoint` for more info
 - `targetpoint_neighbor::VehicleTargetPoint` the point on the neighbor vehicle used for distance calculation, see `VehicleTargetPoint` for more info
@@ -75,38 +75,38 @@ Returns a `NeighborLongitudinalResult` object with the index of the neighbor in 
 """
 function find_neighbor(scene::Scene, roadway::Roadway, ego::Entity{S,D,I};
                        lane::Union{Nothing, Lane} = get_lane(roadway, ego),
-                       rear::Bool=false, 
-                       max_distance::Float64=250.0, 
+                       rear::Bool=false,
+                       max_distance::Float64=250.0,
                        targetpoint_ego::VehicleTargetPoint = VehicleTargetPointCenter(),
                        targetpoint_neighbor::VehicleTargetPoint = VehicleTargetPointCenter(),
                        ids_to_ignore::Union{Nothing, Set{I}} = nothing) where {S,D,I}
-    
-   
-    if lane === nothing 
+
+
+    if lane === nothing
         return NeighborLongitudinalResult(nothing, max_distance)
     elseif get_lane(roadway, ego).tag == lane.tag
-        tag_start = lane.tag 
+        tag_start = lane.tag
         s_start = posf(ego.state).s
     else  # project ego on desired lane
         roadproj = proj(posg(ego.state), lane, roadway)
         roadind = RoadIndex(roadproj)
-        tag_start = roadproj.tag 
+        tag_start = roadproj.tag
         s_start = roadway[roadind].s
     end
     s_base = s_start + targetpoint_delta(targetpoint_ego, ego)
-    
+
     tag_target = tag_start
-    best_ind = nothing 
+    best_ind = nothing
     best_dist = max_distance
-    
+
     dist_searched = 0.0
-    while dist_searched < max_distance 
+    while dist_searched < max_distance
 
         curr_lane = roadway[tag_target]
 
         for (i, veh) in enumerate(scene)
-            
-            if veh.id == ego.id 
+
+            if veh.id == ego.id
                 continue
             end
 
@@ -114,21 +114,21 @@ function find_neighbor(scene::Scene, roadway::Roadway, ego::Entity{S,D,I};
                 continue
             end
 
-            # check if veh is on thislane  
-            s_adjust = NaN 
+            # check if veh is on thislane
+            s_adjust = NaN
 
             if get_lane(roadway, veh).tag == curr_lane.tag
                 s_adjust = 0.0
-            
+
             elseif is_between_segments_hi(posf(veh.state).roadind.ind, curr_lane.curve) &&
                    is_in_entrances(roadway[tag_target], posf(veh.state).roadind.tag)
-            
+
                 distance_between_lanes = norm(VecE2(roadway[tag_target].curve[1].pos - roadway[posf(veh.state).roadind.tag].curve[end].pos))
                 s_adjust = -(roadway[posf(veh.state).roadind.tag].curve[end].s + distance_between_lanes)
-            
+
             elseif is_between_segments_lo(posf(veh.state).roadind.ind) &&
                     is_in_exits(roadway[tag_target], posf(veh.state).roadind.tag)
-            
+
                 distance_between_lanes = norm(VecE2(roadway[tag_target].curve[end].pos - roadway[posf(veh.state).roadind.tag].curve[1].pos))
                 s_adjust = roadway[tag_target].curve[end].s + distance_between_lanes
             end
@@ -136,14 +136,14 @@ function find_neighbor(scene::Scene, roadway::Roadway, ego::Entity{S,D,I};
             if !isnan(s_adjust)
                 s_valid = posf(veh.state).s + targetpoint_delta(targetpoint_neighbor, veh) + s_adjust
                 if rear
-                    dist_valid = s_base - s_valid + dist_searched 
+                    dist_valid = s_base - s_valid + dist_searched
                 else
                     dist_valid = s_valid - s_base + dist_searched
                 end
-                
+
                 if dist_valid ≥ 0.0
                     s_primary = posf(veh.state).s + targetpoint_delta(targetpoint_neighbor, veh) + s_adjust
-                    if rear 
+                    if rear
                         dist=  s_base - s_primary + dist_searched
                     else
                         dist = s_primary - s_base + dist_searched
@@ -187,10 +187,10 @@ end
 
 Contains information about the projection of a point on a lane. See `get_frenet_relative_position`.
 
-# Fields 
+# Fields
 - `origin::RoadIndex` original roadindex used for the projection, contains the target lane ID.
 - `target::RoadIndex` roadindex reached after projection
-- `Δs::Float64` longitudinal distance to the original roadindex 
+- `Δs::Float64` longitudinal distance to the original roadindex
 - `t::Float64` lateral distance to the original roadindex in the frame of the target lane
 - `ϕ::Float64` angle with the original roadindex in the frame of the target lane
 """
@@ -319,8 +319,8 @@ Returns `missing` if there are no front neighbor.
 """
 function dist_to_front_neighbor(roadway::Roadway, scene::Scene, veh::Entity)
     neighbor = find_neighbor(scene, roadway, veh)
-    if neighbor.ind === nothing 
-        return missing 
+    if neighbor.ind === nothing
+        return missing
     else
         return neighbor.Δs
     end
@@ -333,8 +333,8 @@ Returns `missing` if there are no front neighbor.
 """
 function front_neighbor_speed(roadway::Roadway, scene::Scene, veh::Entity)
     neighbor = find_neighbor(scene, roadway, veh)
-    if neighbor.ind === nothing 
-        return missing 
+    if neighbor.ind === nothing
+        return missing
     else
         return vel(scene[neighbor.ind])
     end
@@ -347,7 +347,7 @@ Returns `missing` if there are no front neighbor.
 """
 function time_to_collision(roadway::Roadway, scene::Scene, veh::Entity)
     neighbor = find_neighbor(scene, roadway, veh)
-    if neighbor.ind === nothing 
+    if neighbor.ind === nothing
         return missing
     else
         len_ego = length(veh.def)
