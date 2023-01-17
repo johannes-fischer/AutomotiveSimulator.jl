@@ -162,6 +162,7 @@ function Lane(
     return lane
 end
 
+#=
 Lane(
     tag::LaneTag,
     curve::Curve{T};
@@ -185,6 +186,8 @@ Lane(
         next::RoadIndex=next,
         prev::RoadIndex=prev,
         )
+=#
+
 
 """
     has_next(lane::Lane)
