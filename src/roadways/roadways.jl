@@ -628,7 +628,7 @@ function get_width(roadind::RoadIndex,roadway::Roadway)
         return lane.width[i]
     else
         return lerp(lane.width[i],lane.width[i+1],t)
-
+    end
 end
 
 """
