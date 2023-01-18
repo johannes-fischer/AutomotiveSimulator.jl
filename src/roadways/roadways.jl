@@ -112,7 +112,7 @@ and entrances fields.
 # Fields
 - `tag::LaneTag`
 - `curve::Curve`
-- `width::Float64`  [m]
+- `width::Vector{Float64}`  [m]
 - `speed_limit::SpeedLimit`
 - `boundary_left::LaneBoundary`
 - `boundary_right::LaneBoundary`
