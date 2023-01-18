@@ -128,12 +128,45 @@ mutable struct Lane{T <: Real}
     boundary_right :: LaneBoundary
     exits          :: Vector{LaneConnection{Int64, T}} # list of exits; put the primary exit (at end of lane) first
     entrances      :: Vector{LaneConnection{Int64, T}} # list of entrances; put the primary entrance (at start of lane) first
+
+    function Lane(
+        tag::LaneTag,
+        curve::Curve{T},
+        width::Vector{Float64};
+        speed_limit::SpeedLimit = DEFAULT_SPEED_LIMIT,
+        boundary_left::LaneBoundary = NULL_BOUNDARY,
+        boundary_right::LaneBoundary = NULL_BOUNDARY,
+        exits::Vector{LaneConnection{Int64, T}} = LaneConnection{Int64,T}[],
+        entrances::Vector{LaneConnection{Int64, T}} = LaneConnection{Int64,T}[],
+        next::RoadIndex=NULL_ROADINDEX,
+        prev::RoadIndex=NULL_ROADINDEX,
+        ) where T
+    
+        lane = Lane{T}(tag, 
+                    curve,
+                    width,
+                    speed_limit,
+                    boundary_left,
+                    boundary_right,
+                    exits,
+                    entrances)
+    
+        if next != NULL_ROADINDEX
+            pushfirst!(lane.exits, LaneConnection(true, curveindex_end(lane.curve), next))
+        end
+        if prev != NULL_ROADINDEX
+            pushfirst!(lane.entrances, LaneConnection(false, CURVEINDEX_START, prev))
+        end
+    
+        return lane
+    end
 end
 
+#=
 function Lane(
     tag::LaneTag,
-    curve::Curve{T};
-    width::Vector{Float64},
+    curve::Curve{T},
+    width::Vector{Float64};
     speed_limit::SpeedLimit = DEFAULT_SPEED_LIMIT,
     boundary_left::LaneBoundary = NULL_BOUNDARY,
     boundary_right::LaneBoundary = NULL_BOUNDARY,
@@ -161,9 +194,10 @@ function Lane(
 
     return lane
 end
+=+
 
-
-Lane(
+#=
+function Lane(
     tag::LaneTag,
     curve::Curve{T};
     width = DEFAULT_LANE_WIDTH::Float64,
@@ -174,20 +208,28 @@ Lane(
     entrances::Vector{LaneConnection{Int64, T}} = LaneConnection{Int64,T}[],
     next::RoadIndex=NULL_ROADINDEX,
     prev::RoadIndex=NULL_ROADINDEX,
-    ) where T = Lane(
-        tag::LaneTag,
-        curve::Curve{T};
-        width = fill(width,size(curve)),
-        speed_limit::SpeedLimit = speed_limit,
-        boundary_left::LaneBoundary = boundary_left,
-        boundary_right::LaneBoundary = boundary_right,
-        exits::Vector{LaneConnection{Int64, T}} = exits,
-        entrances::Vector{LaneConnection{Int64, T}} = entrances,
-        next::RoadIndex=next,
-        prev::RoadIndex=prev,
-        )
+    ) where T
 
+    lane = Lane{T}(tag,
+            curve,
+            fill(width,size(curve)),
+            speed_limit,
+            boundary_left,
+            boundary_right,
+            exits,
+            entrances)
 
+    if next != NULL_ROADINDEX
+
+        pushfirst!(lane.exits, LaneConnection(true, curveindex_end(lane.curve), next))
+    end
+    if prev != NULL_ROADINDEX
+        pushfirst!(lane.entrances, LaneConnection(false, CURVEINDEX_START, prev))
+    end
+
+    return lane
+end
+=#
 
 """
     has_next(lane::Lane)
