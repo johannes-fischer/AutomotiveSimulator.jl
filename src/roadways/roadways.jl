@@ -132,7 +132,7 @@ mutable struct Lane{T <: Real}
     function Lane(
         tag::LaneTag,
         curve::Curve{T},
-        width::Vector{Float64} = DEFAULT_LANE_WIDTH;
+        width::Vector{Float64};
         speed_limit::SpeedLimit = DEFAULT_SPEED_LIMIT,
         boundary_left::LaneBoundary = NULL_BOUNDARY,
         boundary_right::LaneBoundary = NULL_BOUNDARY,
@@ -141,11 +141,6 @@ mutable struct Lane{T <: Real}
         next::RoadIndex=NULL_ROADINDEX,
         prev::RoadIndex=NULL_ROADINDEX,
         ) where T
-        
-            if length(width) == 1
-                width = fill(width,size(curve))
-            end
-
             lane = new{T}(tag,curve,width,speed_limit,boundary_left,boundary_right,exits,entrances)
 
             if next != NULL_ROADINDEX
@@ -158,6 +153,42 @@ mutable struct Lane{T <: Real}
             return lane
     end
 
+end
+
+function Lane(
+    tag::LaneTag,
+    curve::Curve{T};
+    width::Float64 = DEFAULT_LANE_WIDTH,
+    speed_limit::SpeedLimit = DEFAULT_SPEED_LIMIT,
+    boundary_left::LaneBoundary = NULL_BOUNDARY,
+    boundary_right::LaneBoundary = NULL_BOUNDARY,
+    exits::Vector{LaneConnection{Int64, T}} = LaneConnection{Int64,T}[],
+    entrances::Vector{LaneConnection{Int64, T}} = LaneConnection{Int64,T}[],
+    next::RoadIndex=NULL_ROADINDEX,
+    prev::RoadIndex=NULL_ROADINDEX,
+    ) where T
+    
+    #s,bl,br,ex,en = speed_limit,boundary_left,boundary_right,exits,entrances
+    #w = fill(width,size(curve))
+
+    lane = Lane(tag, 
+                curve,
+                fill(width,size(curve)),
+                speed_limit = speed_limit,
+                boundary_left = boundary_left,
+                boundary_right = boundary_right,
+                exits = exits,
+                entrances = entrances
+                )
+
+    if next != NULL_ROADINDEX
+        pushfirst!(lane.exits, LaneConnection(true, curveindex_end(lane.curve), next))
+    end
+    if prev != NULL_ROADINDEX
+        pushfirst!(lane.entrances, LaneConnection(false, CURVEINDEX_START, prev))
+    end
+
+    return lane
 end
 
 """
