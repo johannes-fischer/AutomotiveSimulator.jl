@@ -133,7 +133,7 @@ end
 function Lane(
     tag::LaneTag,
     curve::Curve{T};
-    width::Vector{Float64} = fill(DEFAULT_LANE_WIDTH,size(curve)),
+    width::Vector{Float64} = DEFAULT_LANE_WIDTH,
     speed_limit::SpeedLimit = DEFAULT_SPEED_LIMIT,
     boundary_left::LaneBoundary = NULL_BOUNDARY,
     boundary_right::LaneBoundary = NULL_BOUNDARY,
@@ -142,6 +142,15 @@ function Lane(
     next::RoadIndex=NULL_ROADINDEX,
     prev::RoadIndex=NULL_ROADINDEX,
     ) where T
+
+
+
+
+    
+
+    if length(width) == 1
+        width = fill(width,size(curve))
+    end
 
     lane = Lane{T}(tag, 
                 curve,
