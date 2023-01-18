@@ -136,8 +136,8 @@ mutable struct Lane{T <: Real}
         speed_limit::SpeedLimit = DEFAULT_SPEED_LIMIT,
         boundary_left::LaneBoundary = NULL_BOUNDARY,
         boundary_right::LaneBoundary = NULL_BOUNDARY,
-        exits::Vector{LaneConnection{Int64, T}} = [LaneConnection{Int64,T}[]],
-        entrances::Vector{LaneConnection{Int64, T}} = [LaneConnection{Int64,T}[]],
+        exits::Vector{LaneConnection{Int64, T}} = LaneConnection{Int64,T}[],
+        entrances::Vector{LaneConnection{Int64, T}} = LaneConnection{Int64,T}[],
         next::RoadIndex=NULL_ROADINDEX,
         prev::RoadIndex=NULL_ROADINDEX,
         ) where T
