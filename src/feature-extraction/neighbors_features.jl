@@ -310,7 +310,8 @@ function get_frenet_relative_position(posG::VecSE2{Float64}, roadind::RoadIndex,
 
     retval
 end
-get_frenet_relative_position(veh_fore::Entity{S, D, I}, veh_rear::Entity{S, D, I}, roadway::Roadway) where {S,D, I} = get_frenet_relative_position(posg(veh_fore.state), posf(veh_rear.state).roadind, roadway)
+get_frenet_relative_position(veh_fore::Entity{S, D, I}, roadind::RoadIndex, roadway::Roadway) where {S,D, I} = get_frenet_relative_position(posg(veh_fore.state), roadind, roadway)
+get_frenet_relative_position(veh_fore::Entity{S, D, I}, veh_rear::Entity{S, D, I}, roadway::Roadway) where {S,D, I} = get_frenet_relative_position(veh_fore, posf(veh_rear.state).roadind, roadway)
 
 """
     dist_to_front_neighbor(roadway::Roadway, scene::Scene, veh::Entity)
