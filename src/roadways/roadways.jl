@@ -15,8 +15,8 @@ const NULL_BOUNDARY = LaneBoundary(:unknown, :unknown)
 """
     SpeedLimit
 Datastructure to represent a speed limit
-# Fields 
-- `lo::Float64` [m/s] lower speed limit 
+# Fields
+- `lo::Float64` [m/s] lower speed limit
 - `hi::Float64` [m/s] higher speed limit
 """
 struct SpeedLimit
@@ -27,13 +27,13 @@ const DEFAULT_SPEED_LIMIT = SpeedLimit(-Inf, Inf)
 
 #######################
 """
-    LaneTag 
+    LaneTag
 An identifier for a lane. The lane object can be retrieved by indexing the roadway by the lane tag:
 ```julia
 tag = LaneTag(1, 2) # second lane segment 1
 lane = roadway[tag] # returns a Lane object
 ```
-# Fields 
+# Fields
 - `segment::Int64` segment id
 - `lane::Int64` index in segment.lanes of this lane
 """
@@ -50,7 +50,7 @@ const NULL_LANETAG = LaneTag(0,0)
     RoadIndex{I <: Integer, T <: Real}
 A data structure to index points in a roadway. Calling `roadway[roadind]` will return the point
 associated to the road index.
-# Fields 
+# Fields
 - `ind::CurveIndex{I,T}` the index of the point in the curve
 - `tag::LaneTag` the lane tag of the point
 """
@@ -60,14 +60,14 @@ struct RoadIndex{I <: Integer, T <: Real}
 end
 const NULL_ROADINDEX = RoadIndex(CurveIndex(-1,NaN), LaneTag(-1,-1))
 
-Base.show(io::IO, r::RoadIndex) = @printf(io, "RoadIndex({%d, %3.f}, {%d, %d})", r.ind.i, r.ind.t, r.tag.segment, r.tag.lane)
+Base.show(io::IO, r::RoadIndex) = @printf(io, "RoadIndex({%d, %.3f}, {%d, %d})", r.ind.i, r.ind.t, r.tag.segment, r.tag.lane)
 Base.write(io::IO, r::RoadIndex) = @printf(io, "%d %.6f %d %d", r.ind.i, r.ind.t, r.tag.segment, r.tag.lane)
 
 #######################################
 
 """
     LaneConnection{I <: Integer, T <: Real}
-Data structure to specify the connection of a lane. It connects `mylane` to the point `target`. 
+Data structure to specify the connection of a lane. It connects `mylane` to the point `target`.
 `target` would typically be the starting point of a new lane.
 - `downstream::Bool`
 - `mylane::CurveIndex{I,T}`
@@ -103,9 +103,9 @@ end
 const DEFAULT_LANE_WIDTH = 3.0 # [m]
 
 """
-    Lane 
+    Lane
 A driving lane on a roadway. It identified by a `LaneTag`. A lane is defined by a curve which
-represents a center line and a width. In addition it has attributed like speed limit. 
+represents a center line and a width. In addition it has attributed like speed limit.
 A lane can be connected to other lane in the roadway, the connection are specified in the exits
 and entrances fields.
 
@@ -119,7 +119,7 @@ and entrances fields.
 - `exits::Vector{LaneConnection} # list of exits; put the primary exit (at end of lane) first`
 - `entrances::Vector{LaneConnection} # list of entrances; put the primary entrance (at start of lane) first`
 """
-mutable struct Lane{T <: Real} 
+mutable struct Lane{T <: Real}
     tag            :: LaneTag
     curve          :: Curve{T}
     width          :: Float64 # [m]
@@ -142,7 +142,7 @@ function Lane(
     prev::RoadIndex=NULL_ROADINDEX,
     ) where T
 
-    lane = Lane{T}(tag, 
+    lane = Lane{T}(tag,
                 curve,
                 width,
                 speed_limit,
@@ -215,7 +215,7 @@ a list of lanes forming a single road with a common direction
 """
 mutable struct RoadSegment{T<:Real}
     id::Int64
-    lanes::Vector{Lane{T}} 
+    lanes::Vector{Lane{T}}
 end
 RoadSegment{T}(id::Int64) where T = RoadSegment{T}(id, Lane{T}[])
 
@@ -230,7 +230,7 @@ The main datastructure to represent road network, it consists of a list of `Road
 mutable struct Roadway{T<:Real}
     segments::Vector{RoadSegment{T}}
 end
-Roadway{T}() where T = Roadway{T}(RoadSegment{T}[]) 
+Roadway{T}() where T = Roadway{T}(RoadSegment{T}[])
 Roadway() = Roadway{Float64}()
 
 Base.show(io::IO, roadway::Roadway) = @printf(io, "Roadway")
@@ -422,7 +422,7 @@ returns the lane connected to the beginning `lane`. If `lane` has several entran
 prev_lane(lane::Lane, roadway::Roadway) = roadway[lane.entrances[1].target.tag]
 
 """
-    next_lane_point(lane::Lane, roadway::Roadway) 
+    next_lane_point(lane::Lane, roadway::Roadway)
 returns the point of connection between `lane` and its first exit
 """
 next_lane_point(lane::Lane, roadway::Roadway) = roadway[lane.exits[1].target]
@@ -609,8 +609,8 @@ Tries all of the lanes and gets the closest one
 function Vec.proj(posG::VecSE2{T}, roadway::Roadway) where T <: Real
 
     best_dist2 = Inf
-    best_proj = RoadProjection(CurveProjection(CurveIndex(-1,convert(T,-1.0)), 
-                                               convert(T, NaN), 
+    best_proj = RoadProjection(CurveProjection(CurveIndex(-1,convert(T,-1.0)),
+                                               convert(T, NaN),
                                                convert(T, NaN)),
                                 NULL_LANETAG)
 
@@ -647,9 +647,9 @@ end
     move_along(roadind::RoadIndex, road::Roadway, Δs::Float64)
 Return the RoadIndex at ind's s position + Δs
 """
-function move_along(roadind::RoadIndex{I, T}, 
-                    roadway::Roadway, 
-                    Δs::Float64, 
+function move_along(roadind::RoadIndex{I, T},
+                    roadway::Roadway,
+                    Δs::Float64,
                     depth::Int=0) where {I <: Integer, T <: Real}
 
     lane = roadway[roadind.tag]
@@ -716,14 +716,14 @@ n_lanes_right(roadway::Roadway, lane::Lane) = lane.tag.lane - 1
 """
     rightlane(roadway::Roadway, lane::Lane)
 returns the lane to the right of lane if it exists, returns nothing otherwise
-""" 
+"""
 function rightlane(roadway::Roadway, lane::Lane)
     if n_lanes_right(roadway, lane) > 0.0
         return roadway[LaneTag(lane.tag.segment, lane.tag.lane - 1)]
     else
         return nothing
     end
-end 
+end
 
 """
     n_lanes_left(roadway::Roadway, lane::Lane)
@@ -737,19 +737,19 @@ end
 """
     leftlane(roadway::Roadway, lane::Lane)
 returns the lane to the left of lane if it exists, returns nothing otherwise
-""" 
+"""
 function leftlane(roadway::Roadway, lane::Lane)
     if n_lanes_left(roadway, lane) > 0.0
         return roadway[LaneTag(lane.tag.segment, lane.tag.lane + 1)]
     else
         return nothing
     end
-end 
+end
 
 
 """
     lanes(roadway::Roadway{T}) where T
-return a list of all the lanes present in roadway. 
+return a list of all the lanes present in roadway.
 """
 function lanes(roadway::Roadway{T}) where T
     lanes = Lane{T}[]
