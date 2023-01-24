@@ -1,9 +1,9 @@
 """
-    VehicleState 
+    VehicleState
 A default type to represent an agent physical state (position, velocity).
 It contains the position in the global frame, Frenet frame and the longitudinal velocity
 # constructors
-    VehicleState(posG::VecSE2{Float64}, v::Float64) 
+    VehicleState(posG::VecSE2{Float64}, v::Float64)
     VehicleState(posG::VecSE2{Float64}, roadway::Roadway, v::Float64)
     VehicleState(posG::VecSE2{Float64}, lane::Lane, roadway::Roadway, v::Float64)
     VehicleState(posF::Frenet, roadway::Roadway, v::Float64)
@@ -77,11 +77,6 @@ function move_along(vehstate::VehicleState, roadway::Roadway, Δs::Float64;
     )
 
     roadind = move_along(posf(vehstate).roadind, roadway, Δs)
-    try
-        footpoint = roadway[roadind]
-    catch
-        println(roadind)
-    end
     footpoint = roadway[roadind]
     posG = convert(VecE2, footpoint.pos) + polar(t₂, footpoint.pos.θ + π/2)
     posG = VecSE2(posG.x, posG.y, footpoint.pos.θ + ϕ₂)
