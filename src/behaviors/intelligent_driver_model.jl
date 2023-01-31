@@ -20,7 +20,7 @@ around the non-errorable IDM output.
 - `d_cmf::Float64 = 2.0` comfortable deceleration [m/s²] (positive)
 - `d_max::Float64 = 9.0` maximum deceleration [m/s²] (positive)
 """
-@with_kw mutable struct IntelligentDriverModel <: LaneFollowingDriver
+Base.@kwdef mutable struct IntelligentDriverModel <: LaneFollowingDriver
     a::Float64 = NaN # predicted acceleration
     σ::Float64 = NaN # optional stdev on top of the model, set to zero or NaN for deterministic behavior
 
