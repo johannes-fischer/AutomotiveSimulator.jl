@@ -277,7 +277,7 @@ function get_frenet_relative_position(posG::VecSE2{Float64}, roadind::RoadIndex,
         tag_target = prev_lane(lane_start, roadway).tag
         s_base = roadway[tag_target].curve[end].s + norm(VecE2(lane_start.curve[1].pos - prev_lane_point(lane_start, roadway).pos)) # end of the lane
 
-        while dist_searched < max_distance_fore
+        while dist_searched < max_distance_rear
 
             lane = roadway[tag_target]
             curveproj = proj(posG, lane, roadway, move_along_curves=false).curveproj
