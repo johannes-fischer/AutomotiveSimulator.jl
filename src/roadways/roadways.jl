@@ -112,7 +112,7 @@ and entrances fields.
 # Fields
 - `tag::LaneTag`
 - `curve::Curve`
-- `width::Float64`  [m]
+- `width::Vector{Float64}`  [m]
 - `speed_limit::SpeedLimit`
 - `boundary_left::LaneBoundary`
 - `boundary_right::LaneBoundary`
@@ -122,13 +122,39 @@ and entrances fields.
 mutable struct Lane{T <: Real} 
     tag            :: LaneTag
     curve          :: Curve{T}
-    width          :: Float64 # [m]
+    width          :: Vector{Float64} # [m] vector of lane width at each point
     speed_limit    :: SpeedLimit
     boundary_left  :: LaneBoundary
     boundary_right :: LaneBoundary
     exits          :: Vector{LaneConnection{Int64, T}} # list of exits; put the primary exit (at end of lane) first
     entrances      :: Vector{LaneConnection{Int64, T}} # list of entrances; put the primary entrance (at start of lane) first
+
+    function Lane(
+        tag::LaneTag,
+        curve::Curve{T},
+        width::Vector{Float64};
+        speed_limit::SpeedLimit = DEFAULT_SPEED_LIMIT,
+        boundary_left::LaneBoundary = NULL_BOUNDARY,
+        boundary_right::LaneBoundary = NULL_BOUNDARY,
+        exits::Vector{LaneConnection{Int64, T}} = LaneConnection{Int64,T}[],
+        entrances::Vector{LaneConnection{Int64, T}} = LaneConnection{Int64,T}[],
+        next::RoadIndex=NULL_ROADINDEX,
+        prev::RoadIndex=NULL_ROADINDEX,
+        ) where T
+            lane = new{T}(tag,curve,width,speed_limit,boundary_left,boundary_right,exits,entrances)
+
+            if next != NULL_ROADINDEX
+                pushfirst!(lane.exits, LaneConnection(true, curveindex_end(lane.curve), next))
+            end
+            if prev != NULL_ROADINDEX
+                pushfirst!(lane.entrances, LaneConnection(false, CURVEINDEX_START, prev))
+            end
+
+            return lane
+    end
+
 end
+
 function Lane(
     tag::LaneTag,
     curve::Curve{T};
@@ -141,15 +167,19 @@ function Lane(
     next::RoadIndex=NULL_ROADINDEX,
     prev::RoadIndex=NULL_ROADINDEX,
     ) where T
+    
+    #s,bl,br,ex,en = speed_limit,boundary_left,boundary_right,exits,entrances
+    #w = fill(width,size(curve))
 
-    lane = Lane{T}(tag, 
+    lane = Lane(tag, 
                 curve,
-                width,
-                speed_limit,
-                boundary_left,
-                boundary_right,
-                exits,
-                entrances)
+                fill(width,size(curve)),
+                speed_limit = speed_limit,
+                boundary_left = boundary_left,
+                boundary_right = boundary_right,
+                exits = exits,
+                entrances = entrances
+                )
 
     if next != NULL_ROADINDEX
         pushfirst!(lane.exits, LaneConnection(true, curveindex_end(lane.curve), next))
@@ -234,6 +264,8 @@ Roadway{T}() where T = Roadway{T}(RoadSegment{T}[])
 Roadway() = Roadway{Float64}()
 
 Base.show(io::IO, roadway::Roadway) = @printf(io, "Roadway")
+
+#=
 """
     Base.write(io::IO, roadway::Roadway)
 write all the roadway information to a text file
@@ -267,7 +299,9 @@ function Base.write(io::IO, roadway::Roadway)
         end
     end
 end
+=#
 
+#=
 """
     Base.read(io::IO, ::Type{Roadway})
 extract roadway information from a text file and returns a roadway object.
@@ -339,6 +373,7 @@ function Base.read(io::IO, ::Type{Roadway})
     roadway
 end
 
+=#
 
 """
     lane[ind::CurveIndex, roadway::Roadway]
@@ -578,6 +613,21 @@ function Vec.proj(posG::VecSE2{T}, lane::Lane{T}, roadway::Roadway{T};
 end
 
 """
+    get_width(roadind::RoadIndex,roadway::Roadway)
+A help function which returns the width of a lane at the given point identified by 'roadind'
+"""
+function get_width(roadind::RoadIndex,roadway::Roadway)
+    lane  = roadway[roadind.tag]
+    i = roadind.ind.i
+    t = roadind.ind.t
+    if ( i == 1 || i == length(lane.curve) ) && t == 0
+        return lane.width[i]
+    else
+        return lerp(lane.width[i],lane.width[i+1],t)
+    end
+end
+
+"""
     proj(posG::VecSE2{T}, seg::RoadSegment, roadway::Roadway) where T <: Real
 Return the RoadProjection for projecting posG onto the segment.
 Tries all of the lanes and gets the closest one
@@ -590,11 +640,14 @@ function Vec.proj(posG::VecSE2{T}, seg::RoadSegment, roadway::Roadway) where T <
 
     for lane in seg.lanes
         roadproj = proj(posG, lane, roadway)
+        footpoint_roadind = RoadIndex(roadproj)
         footpoint = roadway[roadproj.tag][roadproj.curveproj.ind, roadway]
         dist2 = norm(VecE2(posG - footpoint.pos))
-        if dist2 < best_dist2
+        width = get_width(footpoint_roadind,roadway)
+        if dist2 <= width
             best_dist2 = dist2
             best_proj = roadproj
+            break
         end
     end
 
@@ -617,13 +670,19 @@ function Vec.proj(posG::VecSE2{T}, roadway::Roadway) where T <: Real
     for seg in roadway.segments
         for lane in seg.lanes
             roadproj = proj(posG, lane, roadway, move_along_curves=false)
+            footpoint_roadind = RoadIndex(roadproj)
             targetlane = roadway[roadproj.tag]
             footpoint = targetlane[roadproj.curveproj.ind, roadway]
             dist2 = normsquared(VecE2(posG - footpoint.pos))
-            if dist2 < best_dist2
+            width = get_width(footpoint_roadind,roadway)
+            if dist2 <= width
                 best_dist2 = dist2
                 best_proj = roadproj
+                break
             end
+        end
+        if best_dist2 != Inf
+            break
         end
     end
 
