@@ -1,4 +1,4 @@
-module AutomotiveSimulator 
+module AutomotiveSimulator
 
 using Printf
 using LinearAlgebra
@@ -27,7 +27,7 @@ export CurvePt,
 
 include("roadways/curves.jl")
 
-export     
+export
     LaneTag,
     LaneBoundary,
     Lane,
@@ -71,7 +71,7 @@ export
 
 include("roadways/roadways.jl")
 
-export 
+export
     Frenet,
     NULL_FRENET
 
@@ -106,7 +106,7 @@ export
     capacity,
     id2index,
     get_by_id,
-    get_first_available_id,    
+    get_first_available_id,
     posf,
     posg,
     vel,
@@ -155,7 +155,7 @@ export AbstractFeature,
        extract_feature,
        featuretype,
 
-       # provided feature functions 
+       # provided feature functions
        posgx,
        posgy,
        posgθ,
@@ -227,7 +227,7 @@ export
 
 include("feature-extraction/lidar_sensor.jl")
 
-## Actions 
+## Actions
 
 export
     propagate,
@@ -290,8 +290,9 @@ include("behaviors/tim_lane_changer.jl")
 include("behaviors/lat_lon_separable_driver.jl")
 include("behaviors/tim_2d_driver.jl")
 include("behaviors/sidewalk_pedestrian_model.jl")
+include("behaviors/multilane_idm/MultilaneIDM.jl")
 
-export 
+export
     simulate,
     simulate!,
     run_callback,

@@ -1,0 +1,1 @@
+struct LQRStyle <: OptimizationCriterion end
